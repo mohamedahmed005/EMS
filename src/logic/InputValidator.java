@@ -1,8 +1,32 @@
 package logic;
 
-/** OWNER: Member D. Static helpers used by the GUI forms (and the manager). */
 public class InputValidator {
-    public static boolean isNotEmpty(String input) { return false; /* TODO: not null and not blank */ }
-    public static boolean isValidPositiveInt(String input) { return false; /* TODO: integer > 0 */ }
-    public static boolean isValidNonNegativeDouble(String input) { return false; /* TODO: number >= 0 */ }
+
+    public static boolean isNotEmpty(String input) {
+        return input != null && !input.trim().isEmpty();
+    }
+
+    public static boolean isValidPositiveInt(String input) {
+        if (!isNotEmpty(input)) {
+            return false;
+        }
+        try {
+            int value = Integer.parseInt(input.trim());
+            return value > 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public static boolean isValidNonNegativeDouble(String input) {
+        if (!isNotEmpty(input)) {
+            return false;
+        }
+        try {
+            double value = Double.parseDouble(input.trim());
+            return !Double.isNaN(value) && !Double.isInfinite(value) && value >= 0.0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 }
