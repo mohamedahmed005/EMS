@@ -34,6 +34,7 @@ public class EmployeeManagementPanel extends JPanel {
     private JComboBox<Department> cmbDepartment;
     private JComboBox<String> cmbType;
     private JComboBox<String> cmbFilterDept;
+    private JComboBox<String> cmbFilterType; // filter by Full-Time / Part-Time
 
     private JLabel lblBasicSalary;
     private JLabel lblBonus;
@@ -116,6 +117,7 @@ public class EmployeeManagementPanel extends JPanel {
 
         txtSearch = new JTextField(18);
         cmbFilterDept = new JComboBox<>();
+        cmbFilterType = new JComboBox<>(new String[]{"All Types", "Full-Time", "Part-Time"});
         JButton btnReset = new JButton("Show All");
 
         // Live search: runs on every keystroke
@@ -125,9 +127,11 @@ public class EmployeeManagementPanel extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { applyFilter(); }
         });
         cmbFilterDept.addActionListener(e -> applyFilter());
+        cmbFilterType.addActionListener(e -> applyFilter());
 
         btnReset.addActionListener(e -> {
             txtSearch.setText("");
+            cmbFilterType.setSelectedIndex(0);
             if (cmbFilterDept.getItemCount() > 0) {
                 cmbFilterDept.setSelectedIndex(0);
             }
@@ -138,6 +142,8 @@ public class EmployeeManagementPanel extends JPanel {
         searchPanel.add(txtSearch);
         searchPanel.add(new JLabel("Department:"));
         searchPanel.add(cmbFilterDept);
+        searchPanel.add(new JLabel("Type:"));
+        searchPanel.add(cmbFilterType);
         searchPanel.add(btnReset);
 
         String[] columns = {"ID", "Full Name", "Age", "Department", "Position", "Type", "Monthly Salary (EGP)"};
@@ -218,7 +224,8 @@ public class EmployeeManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Employee added successfully!",
                     "Success", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to add employee. Ensure Employee ID is unique.",
+            JOptionPane.showMessageDialog(this,
+                    "Failed to add employee. Check the ID or that the data files can be written.",
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -249,7 +256,8 @@ public class EmployeeManagementPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Employee updated successfully!",
                     "Success", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to update employee record.",
+            JOptionPane.showMessageDialog(this,
+                    "Failed to update employee. Check the ID or that the data files can be written.",
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -272,32 +280,31 @@ public class EmployeeManagementPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Employee deleted successfully.",
                         "Deleted", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Failed to delete employee.",
+                JOptionPane.showMessageDialog(this,
+                        "Failed to delete employee. Check that the data files can be written.",
                         "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    // Filters the table by department + text (partial, case-insensitive match on ID or name)
+    // Filters by department + type + text (partial, case-insensitive match on ID or name)
     private void applyFilter() {
         String selectedDept = (String) cmbFilterDept.getSelectedItem();
-        if (selectedDept == null) {
+        String selectedType = (String) cmbFilterType.getSelectedItem();
+        if (selectedDept == null || selectedType == null) {
             return; // combo is being reloaded
         }
 
         String query = txtSearch.getText().trim().toLowerCase();
-        List<Employee> baseList = manager.filterByDepartment(selectedDept);
-
-        if (query.isEmpty()) {
-            refreshEmployeeTable(baseList);
-            return;
-        }
-
+        boolean anyType = "All Types".equals(selectedType);
         List<Employee> results = new ArrayList<>();
-        for (Employee emp : baseList) {
-            boolean matchesId = String.valueOf(emp.getEmployeeId()).contains(query);
-            boolean matchesName = emp.getFullName().toLowerCase().contains(query);
-            if (matchesId || matchesName) {
+
+        for (Employee emp : manager.filterByDepartment(selectedDept)) {
+            boolean matchesType = anyType || ("Full-Time".equals(selectedType) && emp instanceof FullTimeEmployee) || ("Part-Time".equals(selectedType) && emp instanceof PartTimeEmployee);
+            boolean matchesText = query.isEmpty()
+                    || String.valueOf(emp.getEmployeeId()).contains(query)
+                    || emp.getFullName().toLowerCase().contains(query);
+            if (matchesType && matchesText) {
                 results.add(emp);
             }
         }
@@ -436,7 +443,7 @@ public class EmployeeManagementPanel extends JPanel {
         txtAge.setText(String.valueOf(emp.getAge()));
         txtPosition.setText(emp.getPosition());
         cmbDepartment.setSelectedItem(emp.getDepartment());
-        cmbType.setSelectedItem(emp.getEmployeeType());
+        cmbType.setSelectedItem(emp instanceof FullTimeEmployee ? "Full-Time" : "Part-Time");
         toggleSalaryFields();
 
         if (emp instanceof FullTimeEmployee ft) {
