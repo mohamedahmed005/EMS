@@ -1,7 +1,9 @@
+
 package gui;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonUI;
 import logic.EmployeeManager;
 
 /**
@@ -29,7 +31,7 @@ public class MainDashboardFrame extends JFrame {
     private void initComponents() {
         setLayout(new BorderLayout());
 
-        // 1. Header Panel (الشريط العلوي للترحيب وتسجيل الخروج)
+        // 1. Header Panel
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(41, 128, 185));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
@@ -39,16 +41,21 @@ public class MainDashboardFrame extends JFrame {
         lblTitle.setForeground(Color.WHITE);
 
         JButton btnLogout = new JButton("Logout");
+        btnLogout.setUI(new BasicButtonUI());
         btnLogout.setFocusable(false);
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnLogout.setBackground(new Color(231, 76, 60));
         btnLogout.setForeground(Color.WHITE);
+        btnLogout.setOpaque(true);
+        btnLogout.setContentAreaFilled(true);
+        btnLogout.setBorderPainted(true);
+        btnLogout.setFocusPainted(false);
         btnLogout.addActionListener(e -> handleLogout());
 
         headerPanel.add(lblTitle, BorderLayout.WEST);
         headerPanel.add(btnLogout, BorderLayout.EAST);
 
-        // 2. Sidebar Navigation Panel (القائمة الجانبية للأزرار)
+        // 2. Sidebar Navigation Panel
         JPanel navPanel = new JPanel(new GridLayout(6, 1, 8, 8));
         navPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         navPanel.setBackground(new Color(236, 240, 241));
@@ -66,7 +73,7 @@ public class MainDashboardFrame extends JFrame {
         navPanel.add(btnEmpMgmt);
         navPanel.add(btnDeptMgmt);
 
-        // 3. Content Area with CardLayout (منطقة المحتوى التي تتغير حسب الاختيار)
+        // 3. Content Area with CardLayout
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
 
@@ -79,7 +86,7 @@ public class MainDashboardFrame extends JFrame {
         lblWelcome.setForeground(new Color(44, 62, 80));
         homePanel.add(lblWelcome);
 
-        // Sub Panels (إنشاء لوحات الموظفين والأقسام وتمرير الـ Manager لها)
+        // Sub Panels
         empPanel = new EmployeeManagementPanel(manager);
         deptPanel = new DepartmentManagementPanel(manager);
 
@@ -87,7 +94,7 @@ public class MainDashboardFrame extends JFrame {
         contentPanel.add(empPanel, "EMPLOYEES");
         contentPanel.add(deptPanel, "DEPARTMENTS");
 
-        // إضافة اللوحات للـ Frame
+        // Add panels to Frame
         add(headerPanel, BorderLayout.NORTH);
         add(navPanel, BorderLayout.WEST);
         add(contentPanel, BorderLayout.CENTER);
@@ -95,10 +102,22 @@ public class MainDashboardFrame extends JFrame {
 
     private JButton createNavButton(String text) {
         JButton btn = new JButton(text);
+
+        btn.setUI(new BasicButtonUI());
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setFocusable(false);
+
         btn.setBackground(new Color(52, 152, 219));
         btn.setForeground(Color.WHITE);
+
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
+        btn.setBorderPainted(true);
+        btn.setFocusPainted(false);
+
+        btn.setBorder(BorderFactory.createLineBorder(
+                new Color(41, 128, 185), 1));
+
         return btn;
     }
 
@@ -108,12 +127,13 @@ public class MainDashboardFrame extends JFrame {
 
     public void handleLogout() {
         int choice = JOptionPane.showConfirmDialog(
-            this,
-            "Are you sure you want to log out?",
-            "Logout Confirmation",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE
+                this,
+                "Are you sure you want to log out?",
+                "Logout Confirmation",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
         );
+
         if (choice == JOptionPane.YES_OPTION) {
             this.dispose();
             SwingUtilities.invokeLater(() -> {

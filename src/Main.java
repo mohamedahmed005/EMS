@@ -1,31 +1,26 @@
-import gui.EmployeeManagementPanel;
-import javax.swing.*;
+import gui.LoginFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import logic.EmployeeManager;
 import logic.FileHandler;
 
 public class Main {
 
     public static void main(String[] args) {
-
         SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                // Use Swing's default look and feel if the system one is unavailable.
+            }
 
             FileHandler fileHandler = new FileHandler(
                     "data/employees.csv",
                     "data/departments.csv"
             );
-
             EmployeeManager manager = new EmployeeManager(fileHandler);
 
-            JFrame frame = new JFrame("Employee Management System");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 700);
-            frame.setLocationRelativeTo(null);
-
-            EmployeeManagementPanel panel = new EmployeeManagementPanel(manager);
-
-            frame.add(panel);
-
-            frame.setVisible(true);
+            new LoginFrame(manager).setVisible(true);
         });
     }
 }

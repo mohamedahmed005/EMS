@@ -146,6 +146,41 @@ public class EmployeeManager {
         return true;
     }
 
+    /** Removes the department with this ID.
+ * Returns false if it doesn't exist or if employees are assigned to it.
+ */
+public boolean removeDepartment(int departmentId) {
+    Department departmentToRemove = null;
+
+    // 1. Find the department
+    for (Department d : departments) {
+        if (d.getDepartmentId() == departmentId) {
+            departmentToRemove = d;
+            break;
+        }
+    }
+
+    // 2. Department doesn't exist
+    if (departmentToRemove == null) {
+        return false;
+    }
+
+    // 3. Prevent removing a department that has employees
+    for (Employee e : employees) {
+        if (e.getDepartment().getDepartmentId() == departmentId) {
+            return false;
+        }
+    }
+
+    // 4. Remove the department
+    departments.remove(departmentToRemove);
+
+    // 5. Save changes to the files
+    saveAll();
+
+    return true;
+}
+
     /** True only if neither the ID nor the name (ignoring case and outer spaces) is used by another department. */
     public boolean isDepartmentUnique(int id, String name) {
         if (id <= 0 || name == null || name.trim().isEmpty()) {
