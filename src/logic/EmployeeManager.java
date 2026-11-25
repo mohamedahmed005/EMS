@@ -14,7 +14,7 @@ public class EmployeeManager {
 
     private List<Employee> employees;
     private List<Department> departments;
-    private FileHandler fileHandler;
+    private final FileHandler fileHandler;
 
     public EmployeeManager(FileHandler fileHandler) {
         if (fileHandler == null) {
@@ -37,7 +37,7 @@ public class EmployeeManager {
 
     // ------------------------------------------------------------ employees
 
-    /** Adds the employee. Returns false (nothing changes) if it is null, the ID is taken, or the department is not registered. */
+    /** Adds the employee. Returns false if it is null, the ID is taken, the department is not registered, or saving failed. */
     public boolean addEmployee(Employee emp) {
         if (emp == null) {
             return false;
@@ -49,14 +49,17 @@ public class EmployeeManager {
             return false;
         }
         employees.add(emp);
-        saveAll();
+        if (!saveAll()) {
+            employees.remove(emp); // undo, so memory matches the file
+            return false;
+        }
         return true;
     }
 
     /**
      * Replaces the employee that currently has ID 'id' with updatedEmp.
      * Returns false if no such employee exists, if the new ID would duplicate
-     * ANOTHER employee, or if the department is not registered.
+     * ANOTHER employee, if the department is not registered, or if saving failed.
      */
     public boolean updateEmployee(int id, Employee updatedEmp) {
         if (updatedEmp == null) {
@@ -74,19 +77,25 @@ public class EmployeeManager {
         if (!isDepartmentRegistered(updatedEmp.getDepartment())) {
             return false;
         }
-        employees.set(index, updatedEmp);
-        saveAll();
+        Employee old = employees.set(index, updatedEmp);
+        if (!saveAll()) {
+            employees.set(index, old); // undo
+            return false;
+        }
         return true;
     }
 
-    /** Removes the employee with this ID. Returns false if there is no such employee. */
+    /** Removes the employee with this ID. Returns false if there is no such employee or saving failed. */
     public boolean deleteEmployee(int id) {
         int index = indexOfEmployee(id);
         if (index == -1) {
             return false;
         }
-        employees.remove(index);
-        saveAll();
+        Employee removed = employees.remove(index);
+        if (!saveAll()) {
+            employees.add(index, removed); // undo
+            return false;
+        }
         return true;
     }
 
@@ -111,15 +120,19 @@ public class EmployeeManager {
         return result;
     }
 
-    /** Case-insensitive match on the department name. Never returns null. */
+    /**
+     * "All" (or empty) returns everyone; otherwise a case-insensitive match
+     * on the department name. Never returns null.
+     */
     public List<Employee> filterByDepartment(String deptName) {
-        List<Employee> result = new ArrayList<>();
-        if (deptName == null || deptName.trim().isEmpty()) {
-            return result;
+        if (deptName == null || deptName.trim().isEmpty() || "All".equalsIgnoreCase(deptName.trim())) {
+            return new ArrayList<>(employees);
         }
+        List<Employee> result = new ArrayList<>();
         String query = deptName.trim();
         for (Employee e : employees) {
-            if (e.getDepartment().getDepartmentName().equalsIgnoreCase(query)) {
+            if (e.getDepartment() != null
+                    && e.getDepartment().getDepartmentName().equalsIgnoreCase(query)) {
                 result.add(e);
             }
         }
@@ -133,7 +146,7 @@ public class EmployeeManager {
 
     // ---------------------------------------------------------- departments
 
-    /** Adds the department. Returns false if it is null or its ID / name (ignoring case) already exists. */
+    /** Adds the department. Returns false if it is null, its ID / name (ignoring case) already exists, or saving failed. */
     public boolean addDepartment(Department dept) {
         if (dept == null) {
             return false;
@@ -142,44 +155,43 @@ public class EmployeeManager {
             return false;
         }
         departments.add(dept);
-        saveAll();
+        if (!saveAll()) {
+            departments.remove(dept); // undo
+            return false;
+        }
         return true;
     }
 
-    /** Removes the department with this ID.
- * Returns false if it doesn't exist or if employees are assigned to it.
- */
-public boolean removeDepartment(int departmentId) {
-    Department departmentToRemove = null;
-
-    // 1. Find the department
-    for (Department d : departments) {
-        if (d.getDepartmentId() == departmentId) {
-            departmentToRemove = d;
-            break;
+    /**
+     * Removes the department with this ID.
+     * Returns false if it doesn't exist, if employees are assigned to it, or if saving failed.
+     */
+    public boolean removeDepartment(int departmentId) {
+        int index = -1;
+        for (int i = 0; i < departments.size(); i++) {
+            if (departments.get(i).getDepartmentId() == departmentId) {
+                index = i;
+                break;
+            }
         }
-    }
-
-    // 2. Department doesn't exist
-    if (departmentToRemove == null) {
-        return false;
-    }
-
-    // 3. Prevent removing a department that has employees
-    for (Employee e : employees) {
-        if (e.getDepartment().getDepartmentId() == departmentId) {
+        if (index == -1) {
             return false;
         }
+
+        // a department that still has employees cannot be removed
+        for (Employee e : employees) {
+            if (e.getDepartment() != null && e.getDepartment().getDepartmentId() == departmentId) {
+                return false;
+            }
+        }
+
+        Department removed = departments.remove(index);
+        if (!saveAll()) {
+            departments.add(index, removed); // undo
+            return false;
+        }
+        return true;
     }
-
-    // 4. Remove the department
-    departments.remove(departmentToRemove);
-
-    // 5. Save changes to the files
-    saveAll();
-
-    return true;
-}
 
     /** True only if neither the ID nor the name (ignoring case and outer spaces) is used by another department. */
     public boolean isDepartmentUnique(int id, String name) {
@@ -209,13 +221,11 @@ public boolean removeDepartment(int departmentId) {
 
     // ----------------------------------------------------------- file i/o
 
-    public void saveAll() {
-        try {
-            fileHandler.saveDepartments(departments);
-            fileHandler.saveEmployees(employees);
-        } catch (Exception e) {
-            System.err.println("Error saving data: " + e.getMessage());
-        }
+    /** Saves departments and employees. Returns true only if both files were written. */
+    public boolean saveAll() {
+        boolean deptsSaved = fileHandler.saveDepartments(departments);
+        boolean empsSaved = fileHandler.saveEmployees(employees);
+        return deptsSaved && empsSaved;
     }
 
     public void loadAll() {
@@ -224,7 +234,7 @@ public boolean removeDepartment(int departmentId) {
             loadedDepartments = (loadedDepartments == null)
                     ? new ArrayList<>() : new ArrayList<>(loadedDepartments);
 
-            // first launch (no departments file yet): start with the company's default departments
+            // first launch (no departments file yet): start with the default departments
             boolean seeded = false;
             if (loadedDepartments.isEmpty()) {
                 loadedDepartments.add(new Department(1, "IT"));
