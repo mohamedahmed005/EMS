@@ -373,6 +373,11 @@ public class EmployeeManagementPanel extends JPanel {
             return null;
         }
 
+        if (!InputValidator.isValidName(name)) {
+            showValidationError("Full Name must contain letters only (no numbers).");
+            return null;
+        }
+
         if (!InputValidator.isValidPositiveInt(ageText)) {
             showValidationError("Age must be a valid positive integer.");
             return null;

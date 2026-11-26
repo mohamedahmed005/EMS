@@ -29,4 +29,9 @@ public class InputValidator {
             return false;
         }
     }
+
+    public static boolean isValidName(String name) {
+    // Letters (any language, including Arabic), spaces, dots, apostrophes, hyphens. No digits.
+    return name != null && name.trim().matches("[\\p{L}][\\p{L} .'-]*");
+}
 }
