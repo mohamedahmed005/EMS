@@ -74,6 +74,18 @@ public abstract class Employee {
         if (pos == null || pos.trim().isEmpty()){
             throw new IllegalArgumentException("Position cannot be empty.");
         }
+        String trimmed = pos.trim();
+        boolean isAllDigits = true;
+         for (int i = 0; i < trimmed.length(); i++) {
+             if (!Character.isDigit(trimmed.charAt(i))) {
+             isAllDigits = false;
+             break;
+             }
+        }
+    
+    if (isAllDigits) {
+        throw new IllegalArgumentException("Position cannot contain only numbers");
+        }
         this.position =pos.trim();
     }
 

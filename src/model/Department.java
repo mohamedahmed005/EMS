@@ -29,6 +29,20 @@ public class Department {
         if (name == null || name.trim().isEmpty()){
             throw new IllegalArgumentException("department name cannot be empty!");
         }
+  
+        String trimmed = name.trim();
+        boolean isAllDigits = true;
+         for (int i = 0; i < trimmed.length(); i++) {
+             if (!Character.isDigit(trimmed.charAt(i))) {
+             isAllDigits = false;
+             break;
+             }
+        }
+    
+    if (isAllDigits) {
+        throw new IllegalArgumentException("department name cannot contain only numbers");
+        }
+
         this.departmentName =name.trim();
     }
     @Override

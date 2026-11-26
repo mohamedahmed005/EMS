@@ -54,6 +54,7 @@ public LoginFrame(EmployeeManager manager) {
 
         txtPassword.addActionListener(this::txtPasswordActionPerformed);
 
+        btnLogin.setForeground(new java.awt.Color(0, 153, 0));
         btnLogin.setText("login");
         btnLogin.addActionListener(this::btnLoginActionPerformed);
 
@@ -64,7 +65,7 @@ public LoginFrame(EmployeeManager manager) {
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-    layout.createSequentialGroup()
+        layout.createSequentialGroup()
         .addContainerGap(30, Short.MAX_VALUE)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
             .addGroup(layout.createSequentialGroup()
