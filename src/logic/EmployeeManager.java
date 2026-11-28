@@ -9,8 +9,8 @@ import model.Department;
 import model.Employee;
 
 public class EmployeeManager {
-    private static final String ADMIN_USERNAME = "admin";
-    private static final String ADMIN_PASSWORD = "admin123";
+    private static final String ADMIN_USERNAME ="admin" ;
+    private static final String ADMIN_PASSWORD = "admin123" ;
 
     private List<Employee> employees;
     private List<Department> departments;

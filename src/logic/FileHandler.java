@@ -1,3 +1,4 @@
+
 package logic;
 
 import java.io.BufferedReader;
@@ -16,14 +17,10 @@ import model.PartTimeEmployee;
 /**
  * Reads/writes data/employees.csv and data/departments.csv (UTF-8).
  * Rebuilds the right subclass (FullTime / PartTime) when loading.
+ * Validates text and numeric inputs during loading to ensure data integrity.
  * A missing file on first launch returns an empty list. Never crashes on IO
  * errors or malformed lines (bad lines are skipped with a warning).
  * Commas and backslashes inside text fields are escaped with a backslash.
- *
- * Formats:
- * departments.csv : id,name
- * employees.csv   : FULL,id,name,age,deptId,position,basic,bonus
- *                   PART,id,name,age,deptId,position,rate,hours
  */
 public class FileHandler {
     private final String employeeFilePath;
@@ -107,9 +104,22 @@ public class FileHandler {
                     String type = parts[0].trim();
                     int id = Integer.parseInt(parts[1].trim());
                     String name = parts[2].trim();
-                    int age = Integer.parseInt(parts[3].trim());
+                    String ageStr = parts[3].trim();
                     int deptId = Integer.parseInt(parts[4].trim());
                     String position = parts[5].trim();
+
+                    // 1. Validation: Name must contain letters and spaces only
+                    if (!name.matches("^[a-zA-Z\\s]+$")) {
+                        System.err.println("Skipping employee line (invalid name, letters only allowed): " + line);
+                        continue;
+                    }
+
+                    // 2. Validation: Age must be a positive integer (> 0)
+                    int age = Integer.parseInt(ageStr);
+                    if (age <= 0) {
+                        System.err.println("Skipping employee line (age must be a positive integer): " + line);
+                        continue;
+                    }
 
                     Department dept = findDepartmentById(departments, deptId);
                     if (dept == null) {
@@ -184,7 +194,7 @@ public class FileHandler {
                 + escape(emp.getPosition());
 
         if (emp instanceof FullTimeEmployee ft) {
-            return "FULL," + common.replaceFirst(",", ",") + "," + ft.getBasicSalary() + "," + ft.getBonus();
+            return "FULL," + common + "," + ft.getBasicSalary() + "," + ft.getBonus();
         } else if (emp instanceof PartTimeEmployee pt) {
             return "PART," + common + "," + pt.getHourlyRate() + "," + pt.getHoursWorked();
         }
